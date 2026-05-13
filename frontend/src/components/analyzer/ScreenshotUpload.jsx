@@ -8,7 +8,7 @@ const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
 const MAX_SIZE_MB = 5;
 const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
 
-const ScreenshotUpload = ({ onUpload, loading }) => {
+const ScreenshotUpload = ({ onUpload, loading, ocrProgress }) => {
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [error, setError] = useState(null);
@@ -136,7 +136,16 @@ const ScreenshotUpload = ({ onUpload, loading }) => {
       )}
 
       {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
-      {loading && <LinearProgress sx={{ mt: 2 }} />}
+      {loading && (
+        <Box sx={{ mt: 2 }}>
+          <LinearProgress />
+          {ocrProgress && (
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+              {ocrProgress}
+            </Typography>
+          )}
+        </Box>
+      )}
 
       {file && (
         <Button
@@ -147,7 +156,7 @@ const ScreenshotUpload = ({ onUpload, loading }) => {
           startIcon={<CloudUploadIcon />}
           sx={{ mt: 2, py: 1.5 }}
         >
-          {loading ? 'Analyzing Screenshot...' : 'Analyze Screenshot'}
+          {loading ? (ocrProgress || 'Processing...') : 'Analyze Screenshot'}
         </Button>
       )}
     </Box>

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { analyzeMessageV2 as apiAnalyzeV2, analyzeScreenshot as apiAnalyzeScreenshot } from '../services/api';
+import { analyzeMessageV2 as apiAnalyzeV2 } from '../services/api';
+import { createWorker } from 'tesseract.js';
 
 const AnalysisContext = createContext(null);
 
@@ -16,11 +17,13 @@ export const AnalysisProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [ocrResult, setOcrResult] = useState(null);
+  const [ocrProgress, setOcrProgress] = useState(null);
 
   const analyzeMessage = useCallback(async (message, senderInfo, messageType) => {
     setLoading(true);
     setError(null);
     setOcrResult(null);
+    setOcrProgress(null);
     try {
       const data = await apiAnalyzeV2(message, senderInfo, messageType);
       setResult(data);
@@ -38,17 +41,45 @@ export const AnalysisProvider = ({ children }) => {
     setLoading(true);
     setError(null);
     setOcrResult(null);
+    setOcrProgress('Extracting text from image...');
     try {
-      const data = await apiAnalyzeScreenshot(file);
-      setResult(data.analysis);
-      setOcrResult(data.ocr_result);
-      return data;
+      // Step 1: OCR in the browser using Tesseract.js
+      const worker = await createWorker('eng', 1, {
+        logger: (m) => {
+          if (m.status === 'recognizing text') {
+            setOcrProgress(`Extracting text... ${Math.round(m.progress * 100)}%`);
+          }
+        },
+      });
+
+      const { data } = await worker.recognize(file);
+      await worker.terminate();
+
+      const extractedText = data.text?.trim();
+      if (!extractedText || extractedText.length < 3) {
+        throw new Error('Could not extract readable text from the image. Please try a clearer screenshot.');
+      }
+
+      const ocr = {
+        extracted_text: extractedText,
+        confidence: Math.round(data.confidence),
+        word_count: extractedText.split(/\s+/).length,
+      };
+      setOcrResult(ocr);
+      setOcrProgress('Analyzing extracted text...');
+
+      // Step 2: Send extracted text to backend for analysis
+      const analysisData = await apiAnalyzeV2(extractedText, null, 'sms');
+      setResult(analysisData);
+
+      return { ocr_result: ocr, analysis: analysisData };
     } catch (err) {
-      const errorMessage = err.response?.data?.detail || 'Failed to analyze screenshot. Please try again.';
+      const errorMessage = err.message || err.response?.data?.detail || 'Failed to analyze screenshot. Please try again.';
       setError(errorMessage);
       throw err;
     } finally {
       setLoading(false);
+      setOcrProgress(null);
     }
   }, []);
 
@@ -56,10 +87,11 @@ export const AnalysisProvider = ({ children }) => {
     setResult(null);
     setError(null);
     setOcrResult(null);
+    setOcrProgress(null);
   }, []);
 
   return (
-    <AnalysisContext.Provider value={{ result, loading, error, ocrResult, analyzeMessage, analyzeScreenshot, clearResult }}>
+    <AnalysisContext.Provider value={{ result, loading, error, ocrResult, ocrProgress, analyzeMessage, analyzeScreenshot, clearResult }}>
       {children}
     </AnalysisContext.Provider>
   );

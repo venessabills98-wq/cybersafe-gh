@@ -20,7 +20,7 @@ const AnalyzerForm = () => {
   const [messageType, setMessageType] = useState('sms');
   const [tab, setTab] = useState(0);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const { analyzeMessage, analyzeScreenshot, loading, error, clearResult } = useAnalysis();
+  const { analyzeMessage, analyzeScreenshot, loading, error, clearResult, ocrProgress } = useAnalysis();
   const navigate = useNavigate();
 
   const dismissError = () => clearResult();
@@ -122,7 +122,7 @@ const AnalyzerForm = () => {
           </Box>
         ) : (
           <Box>
-            <ScreenshotUpload onUpload={handleScreenshotUpload} loading={loading} />
+            <ScreenshotUpload onUpload={handleScreenshotUpload} loading={loading} ocrProgress={ocrProgress} />
             {error && <Alert severity="error" sx={{ mt: 2 }} onClose={dismissError}>{error}</Alert>}
           </Box>
         )}
