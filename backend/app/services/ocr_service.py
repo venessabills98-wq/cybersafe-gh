@@ -1,8 +1,17 @@
 import io
+import shutil
 import hashlib
 from PIL import Image, ImageFilter, ImageEnhance
 import pytesseract
 from app.core.config import settings
+
+
+def _tesseract_available() -> bool:
+    """Check if Tesseract OCR is available on this system."""
+    if settings.TESSERACT_CMD:
+        import os
+        return os.path.isfile(settings.TESSERACT_CMD)
+    return shutil.which("tesseract") is not None
 
 
 def preprocess_image(image: Image.Image) -> Image.Image:
@@ -25,6 +34,12 @@ def extract_text_from_image(image_bytes: bytes) -> dict:
 
     Returns dict with extracted_text, confidence, word_count.
     """
+    if not _tesseract_available():
+        raise RuntimeError(
+            "OCR is not available on this server. "
+            "Please paste the message text directly instead of uploading a screenshot."
+        )
+
     image = Image.open(io.BytesIO(image_bytes))
     processed = preprocess_image(image)
 

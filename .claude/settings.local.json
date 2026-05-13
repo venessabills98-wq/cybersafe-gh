@@ -43,7 +43,12 @@
       "Bash(cd C:\\\\Users\\\\d\\\\Documents\\\\fraud\\\\frontend:*)",
       "Bash(cd C:\\\\Users\\\\d\\\\Documents\\\\fraud\\\\backend:*)",
       "Bash(gh auth:*)",
-      "Bash(cd C:\\\\Users\\\\d\\\\Documents\\\\fraud:*)"
+      "Bash(cd C:\\\\Users\\\\d\\\\Documents\\\\fraud:*)",
+      "Bash(npm install:*)",
+      "Bash(vercel:*)",
+      "Bash(railway version:*)",
+      "Bash(railway whoami:*)",
+      "Bash(railway login:*)"
     ]
   }
 }

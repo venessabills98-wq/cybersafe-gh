@@ -20,8 +20,10 @@ const AnalyzerForm = () => {
   const [messageType, setMessageType] = useState('sms');
   const [tab, setTab] = useState(0);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const { analyzeMessage, analyzeScreenshot, loading, error } = useAnalysis();
+  const { analyzeMessage, analyzeScreenshot, loading, error, clearResult } = useAnalysis();
   const navigate = useNavigate();
+
+  const dismissError = () => clearResult();
 
   const performAnalysis = async () => {
     try {
@@ -107,7 +109,7 @@ const AnalyzerForm = () => {
             </Box>
 
             {loading && <LinearProgress sx={{ mb: 2 }} />}
-            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+            {error && <Alert severity="error" sx={{ mb: 2 }} onClose={dismissError}>{error}</Alert>}
 
             <Button
               type="submit" variant="contained" size="large" fullWidth
@@ -121,17 +123,17 @@ const AnalyzerForm = () => {
         ) : (
           <Box>
             <ScreenshotUpload onUpload={handleScreenshotUpload} loading={loading} />
-            {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
+            {error && <Alert severity="error" sx={{ mt: 2 }} onClose={dismissError}>{error}</Alert>}
           </Box>
         )}
 
         <Snackbar
           open={!!error}
           autoHideDuration={6000}
-          onClose={() => {}}
+          onClose={dismissError}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         >
-          <Alert severity="error" variant="filled" sx={{ width: '100%' }}>
+          <Alert severity="error" variant="filled" sx={{ width: '100%' }} onClose={dismissError}>
             {error}
           </Alert>
         </Snackbar>
